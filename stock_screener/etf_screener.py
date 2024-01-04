@@ -2,6 +2,7 @@ import argparse
 import logging
 import os
 import datetime
+import sys
 import time
 
 from pandas_datareader import data as pdr
@@ -17,10 +18,6 @@ class CachedLimiterSession(CacheMixin, LimiterMixin, Session):
     pass
 
 DEFAULT_FINANCE_FILEPATH_ROOT = r'/data/finance'
-
-ETF_TICKERS = [
-    'AAPB', 'AAPD', 'AAPU', 'AGNG', 'AIQ', 'AIRR', 'ALUM', 'AQWA', 'ARKG', 'ARKK', 'ARKW', 'ARKX', 'ARMR', 'ARVR', 'AWAY', 'BABX', 'BATT', 'BBC', 'BBH', 'BBP', 'BBRE', 'BCDF', 'BDCX', 'BDCZ', 'BDRY', 'BECO', 'BERZ', 'BIB', 'BIS', 'BITQ', 'BITW', 'BIZD', 'BKCH', 'BLCN', 'BLDG', 'BLKC', 'BLLD', 'BLOK', 'BMED', 'BNGE', 'BNKD', 'BNKU', 'BOAT', 'BPAY', 'BTEC', 'BTEK', 'BUG', 'BULD', 'BULZ', 'BUZZ', 'BWEB', 'BYRE', 'CGW', 'CHB', 'CHIH', 'CHII', 'CHIK', 'CHIM', 'CHIR', 'CHIS', 'CHIU', 'CHIX', 'CIBR', 'CIRC', 'CLDL', 'CLIX', 'CLNR', 'CLOU', 'CNBS', 'CNCR', 'CONL', 'COPX', 'CQQQ', 'CRIT', 'CRPT', 'CURE', 'CUT', 'CWEB', 'DAPP', 'DAT', 'DFEN', 'DFGR', 'DFNL', 'DGIN', 'DMAT', 'DPST', 'DRN', 'DRUP', 'DRV', 'DTEC', 'DULL', 'DUSL', 'DUST', 'EATV', 'EATZ', 'EBLU', 'ECLN', 'ECON', 'EDOC', 'EFRA', 'EKG', 'EMFQ', 'EMIF', 'EMQQ', 'ERET', 'EUFN', 'EVX', 'EXI', 'FAS', 'FAZ', 'FBL', 'FBT', 'FCLD', 'FCOM', 'FDHT', 'FDIG', 'FDN', 'FFND', 'FHLC', 'FIDU', 'FINX', 'FITE', 'FIVG', 'FIW', 'FMAT', 'FMET', 'FMQQ', 'FNCL', 'FNGD', 'FNGG', 'FNGO', 'FNGU', 'FPRO', 'FREL', 'FRI', 'FSTA', 'FTAG', 'FTEC', 'FTRI', 'FTXG', 'FTXH', 'FTXL', 'FTXO', 'FTXR', 'FUTY', 'FXG', 'FXH', 'FXL', 'FXO', 'FXR', 'FXU', 'FXZ', 'FYLG', 'GABF', 'GAMR', 'GAST', 'GBLD', 'GDOC', 'GDX', 'GDXD', 'GDXJ', 'GDXU', 'GERM', 'GFOF', 'GII', 'GINN', 'GLIF', 'GMET', 'GNOM', 'GNR', 'GOAU', 'GOEX', 'GQRE', 'GREI', 'GREK', 'GRID', 'GRNR', 'GUNR', 'HACK', 'HAIL', 'HAP', 'HART', 'HAUS', 'HAUZ', 'HDGE', 'HELX', 'HOMZ', 'HTEC', 'HYLG', 'IAI', 'IAK', 'IAT', 'IBB', 'IBBQ', 'IBLC', 'IBOT', 'IBRN', 'ICF', 'IDAT', 'IDNA', 'IDU', 'IETC', 'IEUS', 'IEV', 'IFGL', 'IFRA', 'IGE', 'IGF', 'IGM', 'IGN', 'IGPT', 'IGV', 'IHAK', 'IHE', 'IHF', 'IHI', 'INDF', 'INDS', 'INFL', 'INFR', 'INQQ', 'IPAY', 'IQM', 'IRBO', 'ISRA', 'ITA', 'ITB', 'ITEQ', 'IVEG', 'IVES', 'IWFH', 'IWTR', 'IXG', 'IXJ', 'IXN', 'IXP', 'IYF', 'IYG', 'IYH', 'IYJ', 'IYK', 'IYM', 'IYR', 'IYT', 'IYW', 'IYZ', 'IZRL', 'JDST', 'JETD', 'JETS', 'JETU', 'JFWD', 'JHMU', 'JNUG', 'JPRE', 'JRE', 'JXI', 'KBE', 'KBWB', 'KBWD', 'KBWP', 'KBWR', 'KBWY', 'KCE', 'KEMQ', 'KFVG', 'KIE', 'KLIP', 'KNCT', 'KNGS', 'KOIN', 'KRE', 'KROP', 'KSTR', 'KTEC', 'KURE', 'KWEB', 'KXI', 'LABD', 'LABU', 'LEGR', 'LIT', 'LOUP', 'LRNZ', 'LTL', 'MAKX', 'MDEV', 'MEDI', 'METV', 'MINV', 'MOO', 'MOON', 'MORT', 'MOTO', 'MRAD', 'MSFD', 'MSFU', 'MXI', 'NAIL', 'NANR', 'NBDS', 'NDIV', 'NETL', 'NFRA', 'NUGT', 'NURE', 'NVDL', 'NVDS', 'NXTG', 'OGIG', 'PAVE', 'PBE', 'PBJ', 'PEX', 'PFI', 'PHDG', 'PHO', 'PICK', 'PILL', 'PINK', 'PIO', 'PJP', 'PKB', 'PNQI', 'POTX', 'PPA', 'PPH', 'PPTY', 'PRN', 'PRNT', 'PSCC', 'PSCF', 'PSCH', 'PSCI', 'PSCM', 'PSCT', 'PSCU', 'PSI', 'PSIL', 'PSL', 'PSP', 'PSR', 'PTF', 'PTH', 'PUI', 'PYZ', 'QABA', 'QQH', 'QQQ', 'QTEC', 'QTUM', 'RBLD', 'RDOG', 'REET', 'REIT', 'REK', 'REM', 'REMX', 'REW', 'REZ', 'RFEU', 'RING', 'RITA', 'RNEW', 'ROBO', 'ROKT', 'ROM', 'ROOF', 'RSPC', 'RSPF', 'RSPH', 'RSPM', 'RSPN', 'RSPR', 'RSPS', 'RSPT', 'RSPU', 'RWO', 'RWR', 'RWX', 'RXD', 'RXL', 'SARK', 'SATO', 'SBIO', 'SCHH', 'SDP', 'SEA', 'SEF', 'SEMI', 'SGDJ', 'SGDM', 'SHLD', 'SHNY', 'SHPP', 'SIJ', 'SIL', 'SILJ', 'SIMS', 'SKF', 'SKYU', 'SKYY', 'SLVP', 'SLX', 'SMH', 'SMN', 'SNSR', 'SOCL', 'SOXL', 'SOXQ', 'SOXS', 'SOXX', 'SPRE', 'SPRX', 'SRET', 'SRS', 'SSG', 'STCE', 'SUPL', 'SZK', 'TARK', 'TCHI', 'TDIV', 'TDV', 'TECL', 'TECS', 'TEMP', 'THNQ', 'TIME', 'TINT', 'TINY', 'TOLZ', 'TPOR', 'TRFK', 'TWEB', 'TYLG', 'UBOT', 'UCYB', 'UGE', 'UPW', 'URA', 'URE', 'URNM', 'USD', 'USRT', 'UTES', 'UTSL', 'UXI', 'UYG', 'UYM', 'VAW', 'VDC', 'VEGI', 'VERS', 'VFH', 'VGT', 'VHT', 'VIS', 'VMOT', 'VNQ', 'VNQI', 'VOX', 'VPC', 'VPN', 'VPU', 'VR', 'VRAI', 'WBAT', 'WBIF', 'WBIL', 'WCBR', 'WCLD', 'WDNA', 'WEBL', 'WEBS', 'WFH', 'WGMI', 'WOOD', 'WPS', 'WTAI', 'WUGI', 'XAR', 'XBI', 'XDAT', 'XHB', 'XHE', 'XHS', 'XITK', 'XLB', 'XLF', 'XLI', 'XLK', 'XLP', 'XLRE', 'XLU', 'XLV', 'XME', 'XNTK', 'XPH', 'XPND', 'XSD', 'XSW', 'XT', 'XTL', 'XTN', 'XWEB', 'YUMY', 'ZIG', 'TLT'
-]
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -129,6 +126,8 @@ def main():
                       help="loglevel")
     aparser.add_argument("-r", "--datafile_root", dest="datafile_root", type=str, action="store",
                       help="the output csv file root to write history data into, individual file will be asin_<datatype>.csv")
+    aparser.add_argument("-i", "--inputfile", dest="inputfile", type=str, action="store",
+                      help="the input file that contains all tickers to be processed")
 
     args, extras = aparser.parse_known_args()
 
@@ -142,8 +141,12 @@ def main():
 
     tickers = extras
     if not tickers:
-        logger.warning('No tickers specified, use default ETF_TICKERS')
-        tickers = ETF_TICKERS
+        if args.inputfile:
+            with open(args.inputfile, 'r') as f:
+                tickers = [line.strip() for line in f.readlines()]
+        else:
+            logger.warning('Must provide tickers')
+            sys.exit(1)
 
     bulk_download(tickers[:2], start_date, end_date, args.datafile_root or DEFAULT_FINANCE_FILEPATH_ROOT)
     batch_download(tickers, start_date, end_date, args.datafile_root or DEFAULT_FINANCE_FILEPATH_ROOT)
