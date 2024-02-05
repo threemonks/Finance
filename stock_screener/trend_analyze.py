@@ -4,6 +4,8 @@ import logging
 import matplotlib.pyplot as plt
 import pandas as pd
 import spacy
+from spacy.lang.en import stop_words as spacy_stopwords
+from string import punctuation
 from sklearn.feature_extraction import text
 from sklearn.feature_extraction.text import TfidfVectorizer
 from wordcloud import WordCloud
@@ -94,10 +96,11 @@ def trend_study_embeddings(inputfile, word_count=20, threshold_value=0.20, top=T
     nlp = spacy.load('en_core_web_md')
 
     # Define your stop word list
-    custom_stop_words = ["etf", "proshares", "global", "china", "msci", "ishares", "trading", "funds", "trust", "miscellaneous", "index", "broad", "vaneck", "x"]
+    custom_stop_words = ["etf", "proshares", "global", "china", "msci", "ishares", "trading", "funds", "trust",
+                         "miscellaneous", "index", "broad", "vaneck", "x", "shares", "daily", "strategy", "high"]
 
     # Add custom stop words to spaCy's stop words
-    for stop_word in custom_stop_words:
+    for stop_word in custom_stop_words + list(spacy_stopwords.STOP_WORDS) + list(punctuation):
         nlp.vocab[stop_word].is_stop = True
 
     # Text data analysis
